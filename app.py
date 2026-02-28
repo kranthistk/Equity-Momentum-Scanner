@@ -1,1 +1,41 @@
-import streamlit as st\n\n# Title of the dashboard\nst.title('Equity Momentum Scanner Dashboard')\n\n# Subtitle\nst.subheader('Stay ahead in the financial market')\n\n# Configuration for auto-refreshing\ncached_data = st.cache(allow_output_mutation=True)\n\n@cached_data\ndef get_data():\n    # Fetch data from a source\n    # For example, you can use pandas to read data from an API or CSV file\n    return data\n\n# Auto-refresh every 10 seconds\nif st.button('Refresh Data'):\n    st.experimental_rerun()\nelse:\n    data = get_data()\n    st.dataframe(data)\n\n# Add any additional visualizations or metrics you want to include here.
+import streamlit as st
+import pandas as pd
+from curl_cffi import requests
+import time
+from datetime import datetime
+import pytz
+import plotly.express as px
+
+# Data fetching function
+
+def fetch_equity_data():
+    url = 'https://example.com/api/equities'
+    response = requests.get(url)
+    data = response.json()
+    return pd.DataFrame(data)
+
+# Visualization function
+
+def create_charts(data):
+    fig = px.bar(data, x='company', y='price', title='Company Prices')
+    st.plotly_chart(fig)
+
+# Main app logic
+
+def main():
+    st.title('NSE Equity Momentum Scanner')
+
+    # Auto-refresh logic
+    while True:
+        # Fetch data
+        equity_data = fetch_equity_data()
+        st.dataframe(equity_data)
+        
+        # Create charts
+        create_charts(equity_data)
+
+        # Refresh every 30 seconds
+        time.sleep(30)
+
+if __name__ == '__main__':
+    main()
