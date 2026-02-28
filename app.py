@@ -1,41 +1,40 @@
 import streamlit as st
 import pandas as pd
-from curl_cffi import requests
-import time
+import requests
+import plotly.graph_objects as go
 from datetime import datetime
-import pytz
-import plotly.express as px
+import time
 
-# Data fetching function
-
-def fetch_equity_data():
-    url = 'https://example.com/api/equities'
+# Function to fetch live data from NSE API
+def fetch_data(symbol):
+    url = f"https://api.example.com/nse_data/{symbol}"  # Replace with actual API URL
     response = requests.get(url)
-    data = response.json()
-    return pd.DataFrame(data)
+    return response.json()
 
-# Visualization function
+# Function to calculate momentum indicators
+def calculate_momentum(data):
+    data['Momentum'] = data['Close'].diff(1)
+    return data
 
-def create_charts(data):
-    fig = px.bar(data, x='company', y='price', title='Company Prices')
+# Function to create interactive charts
+def plot_data(data):
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=data['Date'], y=data['Close'], mode='lines', name='Close Price'))
+    fig.update_layout(title='Live NSE Data', xaxis_title='Date', yaxis_title='Price')
     st.plotly_chart(fig)
 
-# Main app logic
+# Streamlit application layout
+st.title("Equity Momentum Scanner")
+interval = 30  # Refresh interval in seconds
 
-def main():
-    st.title('NSE Equity Momentum Scanner')
-
-    # Auto-refresh logic
+symbol = st.sidebar.text_input("Enter NSE Symbol", "RELIANCE")
+if st.button("Fetch Data"):
     while True:
-        # Fetch data
-        equity_data = fetch_equity_data()
-        st.dataframe(equity_data)
-        
-        # Create charts
-        create_charts(equity_data)
-
-        # Refresh every 30 seconds
-        time.sleep(30)
-
-if __name__ == '__main__':
-    main()
+        data = fetch_data(symbol)
+        if data:
+            data = pd.DataFrame(data)
+            data = calculate_momentum(data)
+            st.write(data)
+            plot_data(data)
+        st.empty()
+        time.sleep(interval)
